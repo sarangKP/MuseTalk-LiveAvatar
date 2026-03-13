@@ -21,3 +21,26 @@ experiments/pretrained_models/
 gfpgan/weights/
 *.pth
 *.onnx
+
+
+# ============================================================
+# Upstream MuseTalk files not used by the Live Avatar Pipeline
+# ============================================================
+
+# Training system
+train.py
+train.sh
+configs/training/
+
+# Offline inference scripts
+inference.sh
+scripts/inference.py
+scripts/realtime_inference.py
+scripts/preprocess.py
+configs/inference/
+
+# Gradio demo
+app.py
+
+# Sample data (used only by offline scripts)
+data/
