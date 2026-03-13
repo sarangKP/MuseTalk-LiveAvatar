@@ -1,20 +1,132 @@
-diffusers==0.30.2
-accelerate==0.28.0
+# ============================================================
+# MuseTalk — Live Avatar Pipeline Requirements
+# Python 3.10 | CUDA 11.8 | Tested on RTX 3080
+#
+# IMPORTANT — Install in this exact order to avoid conflicts:
+#
+#   Step 0: PyTorch FIRST (before anything else)
+#     pip install torch==2.0.1 torchvision==0.15.2 torchaudio==2.0.2 \
+#         --index-url https://download.pytorch.org/whl/cu118
+#
+#   Step 1: Pin numpy BEFORE diffusers/tensorflow pull it up
+#     pip install "numpy==1.23.5"
+#
+#   Step 2: Pin huggingface_hub BEFORE transformers/diffusers upgrade it
+#     pip install "huggingface_hub==0.24.0"
+#
+#   Step 3: Install the rest from this file
+#     pip install -r requirements.txt
+#
+#   Step 4: MMLab packages (must come after torch)
+#     pip install --no-cache-dir -U openmim
+#     mim install mmengine
+#     mim install "mmcv==2.0.1"
+#     mim install "mmdet==3.1.0"
+#     mim install "mmpose==1.1.0"
+#
+# Known conflict zones:
+#   - numpy: tensorflow pulls to 1.26+, but mmcv needs <=1.23.5
+#            → pin numpy==1.23.5 before installing tensorflow
+#   - huggingface_hub: kokoro/transformers upgrade it to 0.30+,
+#                      but diffusers==0.30.2 locks it at 0.24.x
+#                      → pin huggingface_hub==0.24.0 first
+#   - tokenizers: must stay <0.19 to match transformers==4.39.2
+#   - triton: locked to 2.0.0 by torch==2.0.1, do not upgrade
+# ============================================================
+
+
+# ------------------------------------------------------------
+# [1] NumPy — pin early, tensorflow/gradio will try to upgrade
+# ------------------------------------------------------------
 numpy==1.23.5
+
+
+# ------------------------------------------------------------
+# [2] HuggingFace ecosystem — order matters here
+#     huggingface_hub must be pinned before diffusers/kokoro
+#     pull it to a newer version that breaks diffusers==0.30.2
+# ------------------------------------------------------------
+huggingface_hub==0.24.0
+tokenizers==0.15.2
+transformers==4.39.2
+safetensors>=0.4.1
+accelerate==0.28.0
+
+
+# ------------------------------------------------------------
+# [3] Diffusers — needs huggingface_hub==0.24.x (pinned above)
+# ------------------------------------------------------------
+diffusers==0.30.2
+
+
+# ------------------------------------------------------------
+# [4] TensorFlow / TensorBoard
+#     Install after numpy is locked — tf will try to pull numpy up
+# ------------------------------------------------------------
 tensorflow==2.12.0
 tensorboard==2.12.0
+
+
+# ------------------------------------------------------------
+# [5] Vision / Audio / ML core
+# ------------------------------------------------------------
 opencv-python==4.9.0.80
 soundfile==0.12.1
-transformers==4.39.2
-huggingface_hub==0.30.2
 librosa==0.11.0
+scipy>=1.10.0
+Pillow>=10.0.0
 einops==0.8.1
-gradio==5.24.0
 
+
+# ------------------------------------------------------------
+# [6] Media / IO utilities
+# ------------------------------------------------------------
+imageio[ffmpeg]
+ffmpeg-python
+moviepy==1.0.3
+omegaconf
 gdown
 requests
-imageio[ffmpeg]
 
-omegaconf
-ffmpeg-python
-moviepy
+
+# ------------------------------------------------------------
+# [7] Live Avatar Pipeline additions
+# ------------------------------------------------------------
+
+# Flask — SSE streaming server
+flask>=3.0.0
+
+# Logging
+loguru>=0.7.0
+
+# Kokoro TTS
+# NOTE: kokoro will try to upgrade huggingface_hub — ignore the warning,
+#       huggingface_hub is already pinned above and it will still work.
+# Requires system package: sudo apt-get install espeak-ng
+kokoro>=0.9.2
+
+
+# ------------------------------------------------------------
+# [8] Gradio — pin separately, it has its own huggingface_hub
+#     requirements that can conflict. Install last among the
+#     main deps so it doesn't drag other packages up with it.
+# ------------------------------------------------------------
+gradio==5.24.0
+
+
+# ------------------------------------------------------------
+# [9] Optional: GFPGAN face enhancement
+#     Uncomment after all above are installed.
+#     Also download weights separately:
+#       mkdir -p experiments/pretrained_models
+#       wget https://github.com/TencentARC/GFPGAN/releases/download/v1.3.4/GFPGANv1.4.pth \
+#            -O experiments/pretrained_models/GFPGANv1.4.pth
+# ------------------------------------------------------------
+# gfpgan
+
+
+# ------------------------------------------------------------
+# [10] Optional: OpenAI-compatible LLM backend
+#      Only needed if using --llm_backend openai
+# ------------------------------------------------------------
+# openai>=1.0.0
